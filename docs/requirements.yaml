@@ -1,0 +1,45 @@
+project:
+  name: vscode-yaml-ui
+  description: VSCode拡張機能としてYAMLを視覚的なUIで編集・プレビュー可能にする
+
+features:
+  - yaml_visual_preview:
+      description: YAMLファイルを視覚的なUIでプレビュー表示
+  - interactive_editing:
+      description: UIからYAMLのデータを直感的に編集可能
+      real_time_sync: true
+      interaction_modes:
+        - default: preview
+        - double_click: edit
+        - context_menu: edit
+  - export_functionality:
+      supported_formats:
+        - json
+        - markdown
+        - html
+        - xml
+        - image (png)
+  - vscode_integration:
+      description: VSCodeエディタとWebviewでの相互通信によるリアルタイム編集
+      context_menu_integration: true
+      context_menu_options:
+        - preview_same_window
+        - preview_side_window
+      auto_preview_on_open:
+        description: YAMLファイルを開いた際に自動的にプレビュー表示するかどうかを設定
+        default: false
+
+technology_stack:
+  vscode_extension:
+    - TypeScript
+    - VSCode API
+    - Webview API
+  webview_ui:
+    - React
+    - Tailwind CSS (optional)
+    - js-yaml
+    - js2xmlparser
+
+constraints:
+  - All dependencies must be JavaScript/TypeScript based
+  - No external backend service required
