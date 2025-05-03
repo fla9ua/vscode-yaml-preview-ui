@@ -54,13 +54,6 @@ export const TableView: React.FC<TableViewProps> = ({ data }) => {
             border-right: 2px solid #ccc;
             color: #333;
           }
-          .description-cell {
-            background-color: #ececec;
-            border-right: 2px solid #ccc;
-            color: #666;
-            font-style: italic;
-            width: 200px;
-          }
           .value-cell {
             background-color: #ffffff;
           }
@@ -290,19 +283,6 @@ const NestedTable: React.FC<NestedTableProps> = ({ data, level }) => {
   if (organizedData.has('(value)')) {
     return <>{renderSimpleValue(data)}</>;
   }
-
-  // 特定のキーパターンに対するフォーマット
-  const hasDescriptionKey = (key: string): boolean => {
-    return key === 'description';
-  };
-  
-  // 特定のキーに対する列の幅調整
-  const getKeyColumnClass = (key: string): string => {
-    if (hasDescriptionKey(key)) {
-      return "description-cell";
-    }
-    return "key-cell";
-  };
   
   // 特定の配列表示パターン（supported_formatsなど）を検出
   const isSpecialFormatArray = (key: string, value: any): boolean => {
@@ -315,7 +295,7 @@ const NestedTable: React.FC<NestedTableProps> = ({ data, level }) => {
       <tbody className={`level-${level}`}>
         {Array.from(organizedData.entries()).map(([key, values]) => (
           <tr key={key}>
-            <td className={getKeyColumnClass(key)}>
+            <td className="key-cell">
               {key}
             </td>
             <td className="value-cell">
