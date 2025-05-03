@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+// Webviewパネルの参照を保持する変数
+let currentPanel: vscode.WebviewPanel | undefined = undefined;
+// 現在開いているエディタの参照
+let currentEditor: vscode.TextEditor | undefined = undefined;
+
 export function activate(context: vscode.ExtensionContext) {
   // 拡張機能が有効化されたときのログ出力
   console.log('YAML Preview UI is now active');
-
-  // Webviewパネルの参照を保持する変数
-  let currentPanel: vscode.WebviewPanel | undefined = undefined;
-  // 現在開いているエディタの参照
-  let currentEditor: vscode.TextEditor | undefined = undefined;
 
   // コマンド登録: YAMLプレビューを表示
   let disposable = vscode.commands.registerCommand('yaml-preview-ui.showPreview', () => {
@@ -115,45 +115,36 @@ function setupWebview(panel: vscode.WebviewPanel, context: vscode.ExtensionConte
     panel.webview.html = getWebviewContent(scriptPath, yamlContent);
     console.log('Webview HTML has been set');
 
-    // Webviewからのメッセージを処理するイベントハンドラ
+    // カスタムイベントリスナーを含むスクリプトを追加
+    const customEventCode = `
+      <script>
+        // カスタムイベントリスナーを設定
+        window.addEventListener('yaml-editor-update', function(event) {
+          const detail = event.detail;
+          console.log('Custom event received:', detail.command);
+          if (detail.command === 'updateYaml' && window.acquireVsCodeApi) {
+            try {
+              const vscode = window.acquireVsCodeApi();
+              vscode.postMessage(detail);
+              console.log('Forwarded message via acquireVsCodeApi');
+            } catch (e) {
+              console.error('Failed to forward message:', e);
+            }
+          }
+        });
+        console.log('Custom event listener installed');
+      </script>
+    `;
+
+    // スクリプトを挿入したHTMLに更新
+    let htmlContent = panel.webview.html;
+    htmlContent = htmlContent.replace('</body>', `${customEventCode}</body>`);
+    panel.webview.html = htmlContent;
+
+    // Webviewからのメッセージを処理するイベントハンドラを登録
     panel.webview.onDidReceiveMessage(
       message => {
-        console.log('Received message from webview:', message.command);
-        switch (message.command) {
-          case 'updateYaml':
-            // YAML更新の処理
-            if (message.content && vscode.window.activeTextEditor) {
-              const editor = vscode.window.activeTextEditor;
-              // ファイル全体を更新
-              const fullRange = new vscode.Range(
-                new vscode.Position(0, 0),
-                editor.document.lineAt(editor.document.lineCount - 1).range.end
-              );
-              
-              // 編集を行う
-              editor.edit(editBuilder => {
-                editBuilder.replace(fullRange, message.content);
-              }).then(success => {
-                if (success) {
-                  // 必要に応じてファイルを保存する設定を追加することも可能
-                  // vscode.commands.executeCommand('workbench.action.files.save');
-                  console.log('YAML content updated successfully');
-                } else {
-                  console.error('Failed to update YAML content');
-                }
-              });
-            }
-            break;
-          case 'ready':
-            // Webviewの準備完了通知
-            console.log('Webview is ready');
-            break;
-          case 'error':
-            // Webviewからのエラー通知
-            console.error('Error in webview:', message.message);
-            vscode.window.showErrorMessage('YAML Preview error: ' + message.message);
-            break;
-        }
+        handleWebviewMessage(panel, message);
       },
       undefined,
       context.subscriptions
@@ -168,6 +159,135 @@ function setupWebview(panel: vscode.WebviewPanel, context: vscode.ExtensionConte
 function updateWebview(panel: vscode.WebviewPanel, yamlContent: string) {
   console.log('Posting message to update webview content');
   panel.webview.postMessage({ command: 'updateContent', content: yamlContent });
+}
+
+// Webviewへのメッセージ送信を確認するヘルパー関数
+function sendMessageToWebview(panel: vscode.WebviewPanel, message: any) {
+  console.log('Sending message to webview:', message.command);
+  panel.webview.postMessage(message);
+  // メッセージが届いたかチェックするためのログ
+  console.log('Message posted to webview');
+}
+
+// Webviewからのメッセージを処理するイベントハンドラ
+function handleWebviewMessage(panel: vscode.WebviewPanel, message: any) {
+  console.log('Received message from webview:', message.command);
+  switch (message.command) {
+    case 'updateYaml':
+      // 現在開いているエディタを取得 (現在のアクティブなエディタとcurrentEditorを確認)
+      const editor = vscode.window.activeTextEditor || currentEditor;
+      
+      if (!editor || !message.content) {
+        console.error('No active editor or content for YAML update');
+        // エディタが見つからない場合はユーザーにエラーを表示
+        vscode.window.showErrorMessage('YAML編集の反映に失敗しました: エディタが見つかりません。YAML編集中にエディタを閉じないでください。');
+        sendMessageToWebview(panel, { 
+          command: 'saveComplete', 
+          success: false,
+          error: '編集の反映に失敗しました: エディタが見つかりません'
+        });
+        return;
+      }
+      
+      // YAMLファイル以外のエディタになっていないか確認
+      if (editor.document.languageId !== 'yaml') {
+        console.error('Active editor is not a YAML file');
+        vscode.window.showErrorMessage('YAML編集の反映に失敗しました: アクティブなエディタがYAMLファイルではありません。');
+        sendMessageToWebview(panel, { 
+          command: 'saveComplete', 
+          success: false,
+          error: '編集の反映に失敗しました: YAMLファイルではありません'
+        });
+        return;
+      }
+      
+      try {
+        console.log('Updating YAML in editor...');
+        
+        // ファイル全体を更新
+        const fullRange = new vscode.Range(
+          new vscode.Position(0, 0),
+          editor.document.lineAt(editor.document.lineCount - 1).range.end
+        );
+        
+        // 編集を行う
+        editor.edit((editBuilder: vscode.TextEditorEdit) => {
+          console.log('Replacing content in editor...');
+          editBuilder.replace(fullRange, message.content);
+        }).then((success: boolean) => {
+          if (success) {
+            console.log('Edit successful, saving file...');
+            // 変更を明示的に保存
+            try {
+              // 編集が確実に反映されてから保存するために、タイムアウトを設定
+              setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.files.save')
+                  .then(() => {
+                    console.log('YAML content saved successfully');
+                    // 保存成功を通知
+                    sendMessageToWebview(panel, { 
+                      command: 'saveComplete', 
+                      success: true 
+                    });
+                  }, (err) => {
+                    // エラーハンドリング
+                    console.error('Error saving file:', err);
+                    vscode.window.showErrorMessage('YAML変更の保存に失敗しました。もう一度試してください。');
+                    sendMessageToWebview(panel, { 
+                      command: 'saveComplete', 
+                      success: false,
+                      error: 'Save failed'
+                    });
+                  });
+              }, 100); // 100ms待機
+            } catch (err) {
+              console.error('Exception during save operation:', err);
+              vscode.window.showErrorMessage('YAML変更の保存中にエラーが発生しました: ' + String(err));
+              sendMessageToWebview(panel, { 
+                command: 'saveComplete', 
+                success: false,
+                error: String(err)
+              });
+            }
+          } else {
+            console.error('Failed to update YAML content');
+            vscode.window.showErrorMessage('YAML内容の更新に失敗しました。もう一度試してください。');
+            sendMessageToWebview(panel, { 
+              command: 'saveComplete', 
+              success: false,
+              error: 'Edit failed'
+            });
+          }
+        }, (err: any) => {
+          // edit操作のエラーハンドリング
+          console.error('Exception during edit operation:', err);
+          vscode.window.showErrorMessage('YAML編集中にエラーが発生しました: ' + String(err));
+          sendMessageToWebview(panel, { 
+            command: 'saveComplete', 
+            success: false,
+            error: 'Edit operation failed: ' + String(err)
+          });
+        });
+      } catch (err) {
+        console.error('Exception processing updateYaml message:', err);
+        vscode.window.showErrorMessage('YAML処理中にエラーが発生しました: ' + String(err));
+        sendMessageToWebview(panel, { 
+          command: 'saveComplete', 
+          success: false,
+          error: 'YAML processing error: ' + String(err)
+        });
+      }
+      break;
+    case 'ready':
+      // Webviewの準備完了通知
+      console.log('Webview is ready');
+      break;
+    case 'error':
+      // Webviewからのエラー通知
+      console.error('Error in webview:', message.message);
+      vscode.window.showErrorMessage('YAML Preview error: ' + message.message);
+      break;
+  }
 }
 
 // Webviewに表示するHTMLを生成

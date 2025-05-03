@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as jsYaml from 'js-yaml';
 import { JsonView } from './JsonView';
 import { TableView } from './TableView';
@@ -16,7 +16,6 @@ interface YamlPreviewProps {
 }
 
 // 表示モードの型定義
-type ViewMode = 'preview' | 'edit';
 type DisplayMode = 'table' | 'json'; // テーブルを先に定義して優先度を示す
 
 export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscodeApi }) => {
@@ -26,16 +25,19 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
   const [jsonData, setJsonData] = useState<any>(null);
   // エラーメッセージ
   const [error, setError] = useState<string | null>(null);
-  // 表示モード (preview or edit)
-  const [viewMode, setViewMode] = useState<ViewMode>('preview');
   // 表示タイプ (table or json) - デフォルトをテーブルに変更
   const [displayMode, setDisplayMode] = useState<DisplayMode>('table');
   // 検出されたYAML形式
   const [yamlFormat, setYamlFormat] = useState<YamlFormat>(YamlFormat.Generic);
+  // 通信ステータスの追跡
+  const [communicationStatus, setCommunicationStatus] = useState<string | null>(null);
+  // 最後に処理されたYAMLコンテンツを保持するref
+  const lastContentRef = useRef<string>(initialContent);
 
   // YAMLからJSONへの変換処理
   const parseYaml = (content: string) => {
     try {
+      console.log('Parsing YAML content...');
       // ここでのコードはブラウザ環境で動作することを確認
       let data = null;
       try {
@@ -66,15 +68,66 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
 
   // 初期コンテンツの処理
   useEffect(() => {
+    console.log('Processing initial content...');
     parseYaml(initialContent);
+    lastContentRef.current = initialContent;
   }, [initialContent]);
 
-  // VSCodeからのコンテンツ更新メッセージを受け取る
+  // VSCode APIのメッセージ設定
+  useEffect(() => {
+    const handleVSCodeMessage = (event: MessageEvent) => {
+      const message = event.data;
+      console.log('YamlPreview: Received message from vscode:', message);
+      
+      if (message.command === 'updateContent') {
+        if (message.content && message.content !== lastContentRef.current) {
+          console.log('YamlPreview: Updating content from VSCode message');
+          setYamlContent(message.content);
+          parseYaml(message.content);
+          lastContentRef.current = message.content;
+        }
+      } else if (message.command === 'saveComplete') {
+        // 保存完了通知の処理
+        console.log('YamlPreview: Save complete notification received:', message.success);
+        if (message.success) {
+          setCommunicationStatus('保存しました');
+          setTimeout(() => setCommunicationStatus(null), 2000);
+        } else {
+          setCommunicationStatus(`エラー: ${message.error || '保存に失敗しました'}`);
+          setTimeout(() => setCommunicationStatus(null), 5000);
+        }
+      }
+    };
+    
+    // VS Code Webview APIの初期化を確認
+    console.log('YamlPreview: Initializing VSCode message listener, vscodeApi available:', !!vscodeApi);
+    
+    // VS Code Webview APIのメッセージイベントをリッスン
+    window.addEventListener('message', handleVSCodeMessage);
+    
+    // 初期化完了メッセージを送信
+    try {
+      vscodeApi.postMessage({ command: 'ready' });
+      console.log('YamlPreview: Ready message sent to vscode');
+    } catch (err) {
+      console.error('YamlPreview: Failed to send ready message:', err);
+    }
+    
+    return () => {
+      window.removeEventListener('message', handleVSCodeMessage);
+    };
+  }, [vscodeApi]);
+
+  // VSCodeからのコンテンツ更新メッセージを受け取る (カスタムイベント用)
   useEffect(() => {
     const handleContentUpdate = (event: CustomEvent) => {
       const newContent = event.detail.content;
-      setYamlContent(newContent);
-      parseYaml(newContent);
+      console.log('Received custom event for content update');
+      if (newContent && newContent !== lastContentRef.current) {
+        setYamlContent(newContent);
+        parseYaml(newContent);
+        lastContentRef.current = newContent;
+      }
     };
 
     // カスタムイベントリスナーを追加
@@ -85,24 +138,6 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
       window.removeEventListener('yaml-content-update', handleContentUpdate as EventListener);
     };
   }, []);
-
-  // 編集モードで内容が変更されたときの処理
-  const handleYamlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setYamlContent(newContent);
-    parseYaml(newContent);
-
-    // VSCodeに変更を通知
-    vscodeApi.postMessage({
-      command: 'updateYaml',
-      content: newContent
-    });
-  };
-
-  // プレビュー/編集モードの切り替え
-  const toggleViewMode = () => {
-    setViewMode(viewMode === 'preview' ? 'edit' : 'preview');
-  };
 
   // 表示モード（テーブル/JSON）の切り替え
   const toggleDisplayMode = () => {
@@ -122,6 +157,7 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
             box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
             max-width: 1200px;
             margin: 0 auto;
+            position: relative;
           }
           .error-message {
             background-color: #fff4f4;
@@ -175,23 +211,6 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
           .mode-controls button:hover {
             background-color: #1976d2;
           }
-          .yaml-editor {
-            margin-top: 12px;
-            background-color: white;
-            padding: 4px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          }
-          .yaml-editor textarea {
-            background-color: white;
-            color: #333;
-            border: 1px solid #ddd;
-            resize: vertical;
-            border-radius: 4px;
-            padding: 10px;
-            font-size: 14px;
-            line-height: 1.5;
-          }
           .yaml-preview {
             margin-top: 12px;
             padding: 0;
@@ -209,6 +228,23 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
             margin-top: 0;
             color: #2e7d32;
             font-size: 16px;
+          }
+          .status-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background-color: rgba(0, 120, 215, 0.9);
+            color: white;
+            border-radius: 4px;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
           }
         `}
       </style>
@@ -232,44 +268,32 @@ export const YamlPreview: React.FC<YamlPreviewProps> = ({ initialContent, vscode
 
       {/* モード切替ボタン */}
       <div className="mode-controls">
-        <button onClick={toggleViewMode}>
-          {viewMode === 'preview' ? 'Edit YAML' : 'Show Preview'}
+        <button onClick={toggleDisplayMode}>
+          {displayMode === 'table' ? 'Show as JSON' : 'Show as Table'}
         </button>
-        {viewMode === 'preview' && (
-          <button onClick={toggleDisplayMode}>
-            {displayMode === 'table' ? 'Show as JSON' : 'Show as Table'}
-          </button>
+      </div>
+
+      {/* プレビューモード */}
+      <div className="yaml-preview">
+        {displayMode === 'table' ? (
+          <TableView data={jsonData} vscodeApi={vscodeApi} yamlContent={yamlContent} />
+        ) : (
+          <JsonView data={jsonData} />
         )}
       </div>
 
-      {/* 編集モード */}
-      {viewMode === 'edit' && (
-        <div className="yaml-editor">
-          <textarea
-            value={yamlContent}
-            onChange={handleYamlChange}
-            spellCheck={false}
-            style={{ width: '100%', height: '400px', fontFamily: 'monospace' }}
-          />
-        </div>
-      )}
-
-      {/* プレビューモード */}
-      {viewMode === 'preview' && (
-        <div className="yaml-preview">
-          {displayMode === 'table' ? (
-            <TableView data={jsonData} />
-          ) : (
-            <JsonView data={jsonData} />
-          )}
-        </div>
-      )}
-
       {/* 特定形式のプレビュー（将来の拡張用） */}
-      {yamlFormat !== YamlFormat.Generic && viewMode === 'preview' && (
+      {yamlFormat !== YamlFormat.Generic && (
         <div className="specialized-preview">
           <h3>Specialized View</h3>
           <p>この形式に特化したビューは現在開発中です。</p>
+        </div>
+      )}
+      
+      {/* 通信ステータスの表示 */}
+      {communicationStatus && (
+        <div className="status-message">
+          {communicationStatus}
         </div>
       )}
     </div>

@@ -25,7 +25,12 @@ export class YamlUtils {
    */
   static stringifyYaml(jsonObj: any): string {
     try {
-      return jsYaml.dump(jsonObj);
+      return jsYaml.dump(jsonObj, {
+        lineWidth: -1, // 行の折り返しなし
+        noRefs: true,  // 循環参照の処理
+        sortKeys: false, // キーの順序を保持
+        schema: jsYaml.DEFAULT_SCHEMA
+      });
     } catch (error) {
       console.error('Failed to stringify YAML:', error);
       throw error;
