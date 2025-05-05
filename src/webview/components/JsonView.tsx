@@ -1,13 +1,46 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface JsonViewProps {
   data: any;
 }
 
 export const JsonView: React.FC<JsonViewProps> = ({ data }) => {
+  // すべてのパスを初期状態で展開するための関数
+  const getAllPaths = (obj: any, currentPath = 'root'): string[] => {
+    if (obj === null || obj === undefined) {
+      return [];
+    }
+
+    let paths: string[] = [currentPath];
+
+    if (Array.isArray(obj)) {
+      obj.forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          paths = [...paths, ...getAllPaths(item, `${currentPath}[${index}]`)];
+        }
+      });
+    } else if (typeof obj === 'object') {
+      Object.keys(obj).forEach(key => {
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          paths = [...paths, ...getAllPaths(obj[key], `${currentPath}.${key}`)];
+        }
+      });
+    }
+
+    return paths;
+  };
+
   // 特定のノードが開かれているかどうかを追跡
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  // 初期表示時にすべてのノードを展開
+  useEffect(() => {
+    if (data) {
+      const allPaths = getAllPaths(data);
+      setExpandedNodes(new Set(allPaths));
+    }
+  }, [data]);
 
   // データが無効な場合の表示
   if (data === null || data === undefined) {

@@ -1,6 +1,8 @@
 import * as React from 'react';
-import { useState, ReactNode, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import * as jsYaml from 'js-yaml';
+import { EditableKeyCell } from './EditableKeyCell';
+import { EditableCell } from './EditableCell';
 
 interface TableViewProps {
   data: any;
@@ -20,178 +22,7 @@ interface NestedTableProps {
   onEditKey: (path: string[], oldKey: string, newKey: string) => void;
 }
 
-interface EditableCellProps {
-  value: any;
-  path: string[];
-  onSave: (path: string[], newValue: any) => void;
-}
-
-interface EditableKeyCellProps {
-  keyName: string;
-  path: string[];
-  onSave: (path: string[], oldKey: string, newKey: string) => void;
-}
-
-// 編集可能なキーセルコンポーネント
-const EditableKeyCell: React.FC<EditableKeyCellProps> = ({ keyName, path, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(keyName);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const handleDoubleClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditValue(e.target.value);
-  };
-
-  const handleBlur = () => {
-    setIsEditing(false);
-    if (editValue !== keyName && editValue.trim() !== '') {
-      onSave(path, keyName, editValue.trim());
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleBlur();
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setEditValue(keyName);
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <input
-        ref={inputRef}
-        type="text"
-        value={editValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        className="key-cell-input"
-        style={{
-          width: '90%',
-          boxSizing: 'border-box',
-          padding: '8px',
-          border: '1px solid #2196f3',
-          borderRadius: '4px',
-          fontFamily: 'inherit',
-          fontSize: 'inherit',
-          fontWeight: 'bold',
-          backgroundColor: '#e6f7ff'
-        }}
-      />
-    );
-  }
-
-  return (
-    <div className="key-text" onDoubleClick={handleDoubleClick}>
-      {keyName}
-    </div>
-  );
-};
-
-// 編集可能なセルコンポーネント
-const EditableCell: React.FC<EditableCellProps> = ({ value, path, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value !== null && value !== undefined ? String(value) : '');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const handleDoubleClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditValue(e.target.value);
-  };
-
-  const handleBlur = () => {
-    setIsEditing(false);
-    let finalValue: any = editValue;
-    
-    // 値の型を推測して変換
-    if (editValue === 'true') {
-      finalValue = true;
-    } else if (editValue === 'false') {
-      finalValue = false;
-    } else if (!isNaN(Number(editValue)) && editValue !== '') {
-      finalValue = Number(editValue);
-    } else if (editValue === '') {
-      finalValue = null;
-    }
-    
-    onSave(path, finalValue);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleBlur();
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setEditValue(value !== null && value !== undefined ? String(value) : '');
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <input
-        ref={inputRef}
-        type="text"
-        value={editValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        style={{
-          width: '100%',
-          boxSizing: 'border-box',
-          padding: '8px',
-          border: '1px solid #2196f3',
-          borderRadius: '4px',
-          fontFamily: 'inherit',
-          fontSize: 'inherit'
-        }}
-      />
-    );
-  }
-
-  if (typeof value === 'boolean') {
-    return <span className="boolean-value" onDoubleClick={handleDoubleClick}>{value.toString()}</span>;
-  }
-
-  if (typeof value === 'number') {
-    return <span className="number-value" onDoubleClick={handleDoubleClick}>{value}</span>;
-  }
-
-  if (typeof value === 'string') {
-    if (value.length > 100) {
-      return <span className="string-value" onDoubleClick={handleDoubleClick}>{value.substring(0, 100)}...</span>;
-    }
-    return <span className="string-value" onDoubleClick={handleDoubleClick}>{value}</span>;
-  }
-
-  if (value === null || value === undefined) {
-    return <span className="undefined-value" onDoubleClick={handleDoubleClick}>undefined</span>;
-  }
-
-  return <span onDoubleClick={handleDoubleClick}>{String(value)}</span>;
-};
+// コンポーネント定義を削除（外部からインポートされたものを使用）
 
 export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlContent }) => {
   // データが無効な場合の表示
@@ -469,41 +300,46 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
           .table-view {
             font-family: var(--vscode-editor-font-family);
             overflow-x: auto;
-            background-color: #ffffff;
+            background-color: var(--panel-background);
             border-radius: 6px;
             padding: 16px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            color: #333;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            color: var(--text-color);
             position: relative;
           }
+          
           .yaml-table {
             border-collapse: collapse;
             width: 100%;
             margin: 0;
-            border: 1px solid #ddd;
-            background-color: #f8f8f8;
-          }
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-background);
+          }`}
+      </style>
+      <style>
+        {`
           .yaml-table th, .yaml-table td {
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             padding: 10px;
             text-align: left;
             vertical-align: top;
           }
           .yaml-table th {
-            background-color: #e0e0e0;
-            color: #333;
+            background-color: var(--background-color);
+            color: var(--text-color);
             font-weight: bold;
           }
           .key-cell {
             width: 200px;
             font-weight: bold;
-            background-color: #ececec;
-            border-right: 2px solid #ccc;
-            color: #333;
+            background-color: var(--format-background);
+            border-right: 2px solid var(--border-color);
+            color: var(--format-text);
             cursor: pointer;
           }
           .key-cell:hover {
-            background-color: #e3f2fd;
+            background-color: var(--button-hover);
+            color: var(--button-text);
           }
           .key-text {
             padding: 2px 4px;
@@ -511,17 +347,14 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
             transition: background-color 0.2s;
           }
           .key-text:hover {
-            background-color: #d0e8ff;
+            background-color: var(--button-hover);
+            color: var(--button-text);
           }
           .value-cell {
-            background-color: #ffffff;
-            cursor: text;
+            background-color: var(--panel-background);
           }
           .value-cell:hover {
-            background-color: #f5f5f5;
-          }
-          .value-cell:active {
-            background-color: #e3f2fd;
+            background-color: var(--background-color);
           }
           .nested-table-container {
             padding: 0;
@@ -531,48 +364,103 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
             width: 100%;
             border-width: 1px;
           }
-          .level-0 .key-cell {
-            background-color: #e6f0ff;
+          /* ダークモード対応レベル別スタイル */
+          [data-theme='light'] .level-0 .key-cell {
+            background-color: #f3f3f5;
+            color: #555555;
           }
-          .level-1 .key-cell {
-            background-color: #e6f5ff;
+          [data-theme='light'] .level-1 .key-cell {
+            background-color: #f5f5f7;
+            color: #555555;
           }
-          .level-2 .key-cell {
-            background-color: #e6faff;
+          [data-theme='light'] .level-2 .key-cell {
+            background-color: #f7f7f9;
+            color: #555555;
           }
-          .level-3 .key-cell {
-            background-color: #e6fff5;
+          [data-theme='light'] .level-3 .key-cell {
+            background-color: #f9f9fb;
+            color: #555555;
           }
-          .level-4 .key-cell {
-            background-color: #e6ffea;
+          [data-theme='light'] .level-4 .key-cell {
+            background-color: #fbfbfd;
+            color: #555555;
           }
-          .level-0 {
-            border-left: 5px solid #0078d7;
+          [data-theme='dark'] .level-0 .key-cell {
+            background-color: #2d3439;
+            color: #ffffff;
           }
-          .level-1 {
-            border-left: 5px solid #2b88d8;
+          [data-theme='dark'] .level-1 .key-cell {
+            background-color: #33393e;
+            color: #ffffff;
           }
-          .level-2 {
-            border-left: 5px solid #5ea3e4;
+          [data-theme='dark'] .level-2 .key-cell {
+            background-color: #393f44;
+            color: #ffffff;
           }
-          .level-3 {
-            border-left: 5px solid #83baeb;
+          [data-theme='dark'] .level-3 .key-cell {
+            background-color: #3f454a;
+            color: #ffffff;
           }
-          .level-4 {
-            border-left: 5px solid #a7d1f1;
+          [data-theme='dark'] .level-4 .key-cell {
+            background-color: #454b50;
+            color: #ffffff;
+          }
+          [data-theme='light'] .level-0 {
+            border-left: 5px solid #8a9aa3;
+          }
+          [data-theme='light'] .level-1 {
+            border-left: 5px solid #96a5ad;
+          }
+          [data-theme='light'] .level-2 {
+            border-left: 5px solid #a2b0b7;
+          }
+          [data-theme='light'] .level-3 {
+            border-left: 5px solid #aebbc1;
+          }
+          [data-theme='light'] .level-4 {
+            border-left: 5px solid #bac6cc;
+          }
+          [data-theme='dark'] .level-0 {
+            border-left: 5px solid #4a5a64;
+          }
+          [data-theme='dark'] .level-1 {
+            border-left: 5px solid #56666f;
+          }
+          [data-theme='dark'] .level-2 {
+            border-left: 5px solid #62727a;
+          }
+          [data-theme='dark'] .level-3 {
+            border-left: 5px solid #6e7e85;
+          }
+          [data-theme='dark'] .level-4 {
+            border-left: 5px solid #7a8a90;
           }
           .undefined-value {
-            color: #999;
+            color: #888888;
             font-style: italic;
           }
-          .string-value {
-            color: #0451a5;
+          [data-theme='light'] .string-value {
+            color: #5e7985;
+            font-weight: normal;
           }
-          .number-value {
-            color: #098658;
+          [data-theme='light'] .number-value {
+            color: #4e9170;
+            font-weight: normal;
           }
-          .boolean-value {
-            color: #0000ff;
+          [data-theme='light'] .boolean-value {
+            color: #69767e;
+            font-weight: normal;
+          }
+          [data-theme='dark'] .string-value {
+            color: #a6bbc5;
+            font-weight: normal;
+          }
+          [data-theme='dark'] .number-value {
+            color: #89d185;
+            font-weight: normal;
+          }
+          [data-theme='dark'] .boolean-value {
+            color: #8fa0a8;
             font-weight: bold;
           }
           .array-items {
@@ -582,21 +470,21 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
           }
           .array-item {
             padding: 4px 6px;
-            background-color: #fff;
+            background-color: var(--panel-background);
             border-radius: 3px;
           }
           .array-item:not(:last-child) {
-            border-bottom: 1px dashed #ccc;
+            border-bottom: 1px dashed var(--border-color);
             margin-bottom: 4px;
           }
           .table-view-empty {
             padding: 20px;
             text-align: center;
-            color: #666;
+            color: var(--text-color);
             font-style: italic;
-            background-color: #f8f8f8;
+            background-color: var(--background-color);
             border-radius: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
           }
           .list-container {
             margin: 0;
@@ -615,19 +503,19 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
           }
           .bullet-item::before {
             content: "• ";
-            color: #0078d7;
+            color: var(--button-background);
             position: absolute;
             left: 0;
             font-weight: bold;
           }
           hr {
             border: none;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             margin: 8px 0;
           }
           .editable-hint {
             font-size: 12px;
-            color: #666;
+            color: var(--text-color);
             margin-top: 10px;
             font-style: italic;
             text-align: right;
@@ -637,11 +525,11 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
             bottom: 20px;
             right: 20px;
             padding: 10px 16px;
-            background-color: rgba(0, 120, 215, 0.9);
-            color: white;
+            background-color: var(--status-background);
+            color: var(--status-text);
             border-radius: 4px;
             font-size: 14px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px var(--shadow-color);
             z-index: 1000;
             animation: fadeIn 0.3s ease;
           }
@@ -650,11 +538,11 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
             bottom: 20px;
             right: 20px;
             padding: 10px 16px;
-            background-color: rgba(215, 40, 40, 0.9);
-            color: white;
+            background-color: var(--error-background);
+            color: var(--error-text);
             border-radius: 4px;
             font-size: 14px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px var(--shadow-color);
             z-index: 1000;
             animation: fadeIn 0.3s ease;
           }
@@ -662,8 +550,54 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
           }
+          
+          /* 値のタイプごとの色とスタイルを強化 */
+          span.string-value:hover, span.number-value:hover, span.boolean-value:hover, span.undefined-value:hover {
+            background-color: var(--button-hover);
+            opacity: 0.9;
+          }
+          
+          /* 編集可能なフィールドを示す視覚的手がかり */
+          span.string-value, span.number-value, span.boolean-value, span.undefined-value {
+            border-bottom: 1px dotted var(--border-color);
+          }
+          
+          [data-theme='light'] {
+            --panel-background: #ffffff;
+            --background-color: #fafafa;
+            --text-color: #555555;
+            --border-color: #e5e5e5;
+            --format-background: #f7f7f9;
+            --format-text: #5e7985;
+            --button-background: #8aa0aa;
+            --button-text: #ffffff;
+            --button-hover: #778e99;
+            --shadow-color: rgba(0, 0, 0, 0.06);
+            --status-background: #f0f0f2;
+            --status-text: #5e7985;
+            --error-background: #feeef0;
+            --error-text: #c56c6c;
+          }
+          
+          [data-theme='dark'] {
+            --panel-background: #2d2d2d;
+            --background-color: #1e1e1e;
+            --text-color: #e8e8e8;
+            --border-color: #555555;
+            --format-background: #2d3439;
+            --format-text: #a6bbc5;
+            --button-background: #4a5a64;
+            --button-text: #ffffff;
+            --button-hover: #5a6a74;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --status-background: #2d3439;
+            --status-text: #ffffff;
+            --error-background: #5a1d1d;
+            --error-text: #f48771;
+          }
         `}
       </style>
+      
       <NestedTable 
         data={data} 
         level={0} 

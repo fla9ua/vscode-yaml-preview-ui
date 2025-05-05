@@ -1,0 +1,54 @@
+/* テーマ変数 */
+:root {
+  /* ライトモード（デフォルト）変数 */
+  --background-color: #fafafa;
+  --text-color: #555555;
+  --border-color: #e5e5e5;
+  --panel-background: #ffffff;
+  --panel-border: rgba(0, 0, 0, 0.05);
+  --button-background: #8aa0aa;
+  --button-hover: #778e99;
+  --button-text: #ffffff;
+  --error-background: #feeef0;
+  --error-border: #e8b5b5;
+  --error-text: #c56c6c;
+  --menu-background: #ffffff;
+  --menu-hover: #f5f5f7;
+  --status-background: rgba(138, 160, 170, 0.8);
+  --status-text: #ffffff;
+  --format-background: #f7f7f9;
+  --format-border: #8aa0aa;
+  --format-text: #5e7985;
+  --specialized-background: #f4faf6;
+  --specialized-border: #8bc9a0;
+  --specialized-text: #4e9170;
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --code-background: #f8f8f8;
+}
+
+/* ダークモード変数 */
+[data-theme='dark'] {
+  --background-color: #1e1e1e;
+  --text-color: #e0e0e0;
+  --border-color: #444444;
+  --panel-background: #252526;
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --button-background: #4a5a64;
+  --button-hover: #5a6a74;
+  --button-text: #ffffff;
+  --error-background: #3c1f1f;
+  --error-border: #be3737;
+  --error-text: #ff6b6b;
+  --menu-background: #333333;
+  --menu-hover: #444444;
+  --status-background: rgba(74, 90, 100, 0.9);
+  --status-text: #ffffff;
+  --format-background: #2d3439;
+  --format-border: #4a5a64;
+  --format-text: #a6bbc5;
+  --specialized-background: #1e3428;
+  --specialized-border: #3e884f;
+  --specialized-text: #7acc8d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --code-background: #2d2d2d;
+} 
