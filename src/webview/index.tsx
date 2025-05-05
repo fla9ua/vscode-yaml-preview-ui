@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { YamlPreview } from './components/YamlPreview';
-import { ThemeProvider, ThemeMode } from './utils/themeContext';
+import { ThemeProvider } from './utils/themeContext';
 import './utils/themeStyles.css';
 
 // グローバルオブジェクトのポリフィル - より堅牢な実装
@@ -24,7 +24,6 @@ declare global {
   interface Window {
     initialData: {
       yamlContent: string;
-      vscodeTheme?: ThemeMode;
     };
     acquireVsCodeApi: () => {
       postMessage: (message: any) => void;
@@ -86,10 +85,6 @@ function initializeApp() {
       const vscode = window.acquireVsCodeApi();
       console.log('VS Code API acquired');
 
-      // VSCodeから初期テーマを取得
-      const initialTheme = window.initialData.vscodeTheme || 'light';
-      console.log('Initial theme:', initialTheme);
-
       // rootエレメントの存在確認
       const rootElement = document.getElementById('root');
       if (!rootElement) {
@@ -102,7 +97,7 @@ function initializeApp() {
       // Reactコンポーネントのレンダリング
       ReactDOM.render(
         <React.StrictMode>
-          <ThemeProvider initialTheme={initialTheme}>
+          <ThemeProvider>
           <YamlPreview
             initialContent={window.initialData.yamlContent}
             vscodeApi={vscode}
@@ -120,16 +115,6 @@ function initializeApp() {
       window.addEventListener('message', event => {
         const message = event.data;
         console.log('Received message in webview:', message);
-        
-        // VSCodeのテーマ変更メッセージを処理
-        if (message.command === 'themeChanged') {
-          console.log('Theme changed:', message.theme);
-          // テーマ変更イベントを発火
-          const themeEvent = new CustomEvent('vscode-theme-changed', {
-            detail: { theme: message.theme }
-          });
-          window.dispatchEvent(themeEvent);
-        }
         
         // コンテンツの更新メッセージを受け取った場合
         if (message.command === 'updateContent') {

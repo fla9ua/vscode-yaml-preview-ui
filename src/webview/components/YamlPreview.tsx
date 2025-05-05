@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import * as jsYaml from 'js-yaml';
-import { JsonView } from './JsonView';
 import { TableView } from './TableView';
 import { YamlDetector, YamlFormat } from '../../utils/yaml-detector';
 import { ThemeProvider } from '../utils/themeContext';
@@ -504,16 +503,5 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
 
 // メインコンポーネント（ThemeProviderでラップ）
 export const YamlPreview: React.FC<YamlPreviewProps> = (props) => {
-  // VSCodeの現在のテーマを取得
-  const detectVSCodeTheme = (): 'light' | 'dark' => {
-    // VSCodeのbodyクラスからテーマを検出（vscodeのデフォルト）
-    const bodyClasses = document.body.className;
-    return bodyClasses.includes('vscode-light') ? 'light' : 'dark';
-  };
-
-  return (
-    <ThemeProvider initialTheme={detectVSCodeTheme()}>
-      <YamlPreviewInner {...props} />
-    </ThemeProvider>
-  );
+  return <YamlPreviewInner {...props} />;
 }; 
