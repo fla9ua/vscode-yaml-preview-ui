@@ -5,7 +5,7 @@ import { TableView } from './TableView';
 import { YamlDetector, YamlFormat } from '../../utils/yaml-detector';
 import { ThemeProvider } from '../utils/themeContext';
 
-// プロパティの型定義
+// Property type definition
 interface YamlPreviewProps {
   initialContent: string;
   vscodeApi: {
@@ -15,31 +15,31 @@ interface YamlPreviewProps {
   };
 }
 
-// エクスポート形式の定義
+// Export format definition
 type ExportFormat = 'json' | 'xml' | 'pdf' | 'csv' | 'markdown' | 'html' | 'png';
 
-// テーマをラップするコンポーネント
+// Component wrapped with theme
 const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeApi }) => {
-  // YAMLコンテンツのステート
+  // YAML content state
   const [yamlContent, setYamlContent] = useState<string>(initialContent);
-  // パース済みのJSONデータ
+  // Parsed JSON data
   const [jsonData, setJsonData] = useState<any>(null);
-  // エラーメッセージ
+  // Error message
   const [error, setError] = useState<string | null>(null);
-  // 検出されたYAML形式
+  // Detected YAML format
   const [yamlFormat, setYamlFormat] = useState<YamlFormat>(YamlFormat.Generic);
-  // 通信ステータスの追跡
+  // Communication status tracking
   const [communicationStatus, setCommunicationStatus] = useState<string | null>(null);
-  // 最後に処理されたYAMLコンテンツを保持するref
+  // Ref to hold last processed YAML content
   const lastContentRef = useRef<string>(initialContent);
-  // エクスポートメニューの表示状態
+  // Export menu display state
   const [showExportMenu, setShowExportMenu] = useState<boolean>(false);
 
-  // YAMLからJSONへの変換処理
+  // Convert YAML to JSON
   const parseYaml = (content: string) => {
     try {
       console.log('Parsing YAML content...');
-      // ここでのコードはブラウザ環境で動作することを確認
+      // Make sure this code runs in browser environment
       let data = null;
       try {
         data = jsYaml.load(content);
@@ -49,7 +49,7 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
       }
       
       setJsonData(data);
-      // YAML形式を検出
+      // Detect YAML format
       if (data && typeof data === 'object') {
         const format = YamlDetector.detectFormat(data);
         setYamlFormat(format);
@@ -67,14 +67,14 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
     }
   };
 
-  // 初期コンテンツの処理
+  // Process initial content
   useEffect(() => {
     console.log('Processing initial content...');
     parseYaml(initialContent);
     lastContentRef.current = initialContent;
   }, [initialContent]);
 
-  // VSCode APIのメッセージ設定
+  // Set up VSCode API message handling
   useEffect(() => {
     const handleVSCodeMessage = (event: MessageEvent) => {
       const message = event.data;
@@ -88,59 +88,59 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
           lastContentRef.current = message.content;
         }
       } else if (message.command === 'saveComplete') {
-        // 保存完了通知の処理
+        // Process save complete notification
         console.log('YamlPreview: Save complete notification received:', message.success);
         if (message.success) {
-          setCommunicationStatus('保存しました');
+          setCommunicationStatus('Saved successfully');
           setTimeout(() => setCommunicationStatus(null), 2000);
         } else {
-          setCommunicationStatus(`エラー: ${message.error || '保存に失敗しました'}`);
+          setCommunicationStatus(`Error: ${message.error || 'Failed to save'}`);
           setTimeout(() => setCommunicationStatus(null), 5000);
         }
       } else if (message.command === 'exportComplete') {
-        // エクスポート完了通知の処理
+        // Process export complete notification
         console.log('YamlPreview: Export complete notification received:', message.success);
         if (message.success) {
-          setCommunicationStatus(`${message.format?.toUpperCase() || 'ファイル'}をエクスポートしました`);
+          setCommunicationStatus(`Exported ${message.format?.toUpperCase() || 'file'} successfully`);
           setTimeout(() => setCommunicationStatus(null), 2000);
         } else {
-          setCommunicationStatus(`エラー: ${message.error || 'エクスポートに失敗しました'}`);
+          setCommunicationStatus(`Error: ${message.error || 'Export failed'}`);
           setTimeout(() => setCommunicationStatus(null), 5000);
         }
       } else if (message.command === 'prepareForScreenshot') {
-        // スクリーンショット撮影準備の処理
+        // Process screenshot preparation
         console.log('YamlPreview: Preparing for screenshot');
-        // エクスポートメニューが開いていれば閉じる
+        // Close export menu if open
         setShowExportMenu(false);
-        // 通知メッセージを非表示にする
+        // Hide notification messages
         setCommunicationStatus(null);
-        // 必要に応じて他のUI要素の準備（すべてのノードを展開するなど）
+        // Prepare other UI elements as needed (e.g., expand all nodes)
       } else if (message.command === 'captureHtmlSnapshot') {
-        // HTMLスナップショットの取得と送信
+        // Capture and send HTML snapshot
         console.log('YamlPreview: Capturing HTML snapshot');
         
-        // エクスポートメニューを非表示にする
+        // Hide export menu
         setShowExportMenu(false);
-        // 通知メッセージを非表示にする
+        // Hide notification messages
         setCommunicationStatus(null);
         
-        // 少し待ってからスナップショットを取得（UIの更新を待つため）
+        // Wait a moment to capture snapshot (to allow UI updates to complete)
         setTimeout(() => {
           try {
-            // テーブル要素のみを取得
+            // Get table element only
             const tableElement = document.querySelector('.content-view table');
             if (!tableElement) {
-              // テーブルが見つからない場合は代替としてコンテンツビュー全体を使用
+              // If table not found, use entire content view as fallback
               const contentElement = document.querySelector('.content-view');
               if (!contentElement) {
                 throw new Error('Content element not found');
               }
               
-              // スタイル情報を取得
+              // Get style information
               const styles = Array.from(document.styleSheets)
                 .filter(sheet => {
                   try {
-                    // CSSStyleSheet.cssRulesの取得はCORSポリシーによって制限される可能性がある
+                    // CSSStyleSheet.cssRules access may be restricted by CORS policy
                     return sheet.cssRules !== null;
                   } catch (e) {
                     return false;
@@ -153,18 +153,18 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
                 })
                 .join('\n');
               
-              // HTML内容を取得（編集関連のUI要素を除外）
+              // Get HTML content (excluding edit-related UI elements)
               const html = contentElement.innerHTML;
               
-              // VSCodeにスナップショット情報を送信
+              // Send snapshot information to VSCode
               vscodeApi.postMessage({
                 command: 'htmlSnapshot',
                 html: html,
                 styles: styles
               });
             } else {
-              // テーブル要素が見つかった場合、それだけを使用
-              // スタイル情報を取得
+              // If table element found, use it only
+              // Get style information
               const styles = Array.from(document.styleSheets)
                 .filter(sheet => {
                   try {
@@ -180,10 +180,10 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
                 })
                 .join('\n');
               
-              // テーブルのHTMLを取得
+              // Get table HTML
               const html = tableElement.outerHTML;
               
-              // VSCodeにスナップショット情報を送信
+              // Send snapshot information to VSCode
               vscodeApi.postMessage({
                 command: 'htmlSnapshot',
                 html: html,
@@ -200,91 +200,86 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
               error: String(err)
             });
           }
-        }, 200); // 200msの遅延を設定
+        }, 200); // Set 200ms delay
       }
     };
-    
-    // VS Code Webview APIの初期化を確認
-    console.log('YamlPreview: Initializing VSCode message listener, vscodeApi available:', !!vscodeApi);
-    
-    // VS Code Webview APIのメッセージイベントをリッスン
-    window.addEventListener('message', handleVSCodeMessage);
-    
-    // 初期化完了メッセージを送信
-    try {
+
+    // Check for VS Code Webview API initialization
+    if (window.addEventListener) {
+      // Listen for messages from VS Code Webview API
+      window.addEventListener('message', handleVSCodeMessage);
+
+      // Send initialization complete message
+      console.log('YamlPreview: Sending ready message to VSCode');
       vscodeApi.postMessage({ command: 'ready' });
-      console.log('YamlPreview: Ready message sent to vscode');
-    } catch (err) {
-      console.error('YamlPreview: Failed to send ready message:', err);
+    } else {
+      console.error('Window event listener is not available');
     }
+
+    // Handle content updates from VSCode (custom event)
+    const handleContentUpdate = (event: CustomEvent) => {
+      const detail = event.detail;
+      console.log('YamlPreview: Received content update event:', detail);
+      
+      if (detail.command === 'updateYaml' && detail.content) {
+        // Send updated YAML back to VS Code
+        vscodeApi.postMessage({
+          command: 'updateYaml',
+          content: detail.content
+        });
+        setCommunicationStatus('Saving...');
+      }
+    };
+
+    // Add custom event listener
+    window.addEventListener('yaml-editor-update', handleContentUpdate as EventListener);
     
     return () => {
       window.removeEventListener('message', handleVSCodeMessage);
+      window.removeEventListener('yaml-editor-update', handleContentUpdate as EventListener);
     };
   }, [vscodeApi]);
 
-  // VSCodeからのコンテンツ更新メッセージを受け取る (カスタムイベント用)
-  useEffect(() => {
-    const handleContentUpdate = (event: CustomEvent) => {
-      const newContent = event.detail.content;
-      console.log('Received custom event for content update');
-      if (newContent && newContent !== lastContentRef.current) {
-        setYamlContent(newContent);
-        parseYaml(newContent);
-        lastContentRef.current = newContent;
-      }
-    };
-
-    // カスタムイベントリスナーを追加
-    window.addEventListener('yaml-content-update', handleContentUpdate as EventListener);
-
-    // クリーンアップ関数
-    return () => {
-      window.removeEventListener('yaml-content-update', handleContentUpdate as EventListener);
-    };
-  }, []);
-
-  // エクスポートメニュー以外のクリックでメニューを閉じる
+  // Close export menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.export-menu') && !target.closest('.export-button')) {
+      const target = event.target as Element;
+      if (showExportMenu && !target.closest('.export-menu-container')) {
         setShowExportMenu(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [showExportMenu]);
 
-  // 指定形式でエクスポートする関数
+  // Export in specified format
   const exportAs = (format: ExportFormat) => {
+    console.log(`YamlPreview: Exporting as ${format}`);
+    
     if (!jsonData) {
-      setCommunicationStatus('エラー: エクスポートするデータがありません');
+      console.error('Cannot export: No valid data');
+      setCommunicationStatus('Error: No valid data to export');
       setTimeout(() => setCommunicationStatus(null), 3000);
       return;
     }
-
-    try {
-      // VS Code拡張機能にエクスポートのメッセージを送信
-      vscodeApi.postMessage({
-        command: 'exportAs',
-        format: format,
-        content: JSON.stringify(jsonData, null, 2),
-        yamlContent: yamlContent
-      });
-      console.log(`Export as ${format} message sent`);
-      setShowExportMenu(false); // メニューを閉じる
-    } catch (err) {
-      console.error('Failed to send export request:', err);
-      setCommunicationStatus(`エラー: エクスポートリクエストの送信に失敗しました`);
-      setTimeout(() => setCommunicationStatus(null), 3000);
-    }
+    
+    // Send export message to VS Code extension
+    vscodeApi.postMessage({
+      command: 'exportAs',
+      format: format,
+      content: jsonData,
+      yamlContent: yamlContent
+    });
+    
+    setCommunicationStatus(`Exporting as ${format.toUpperCase()}...`);
+    setShowExportMenu(false); // Close menu
   };
 
-  // エクスポートメニューのトグル
+  // Toggle export menu
   const toggleExportMenu = () => {
     setShowExportMenu(!showExportMenu);
   };
@@ -313,6 +308,19 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
             font-family: var(--vscode-editor-font-family);
             white-space: pre-wrap;
           }
+          .editing-guide {
+            background-color: var(--info-background);
+            color: var(--info-text);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 10px 0 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+          }
+          .editing-guide .info-icon {
+            margin-right: 8px;
+          }
           .toolbar {
             display: flex;
             justify-content: space-between;
@@ -335,16 +343,21 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
             background-color: var(--button-background);
             color: var(--button-text);
             border: none;
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
             font-family: var(--vscode-editor-font-family);
             display: flex;
             align-items: center;
             outline: none;
             box-shadow: 0 1px 3px var(--shadow-color);
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            min-width: 90px;
+            justify-content: center;
+            margin-top: 5px;
+            margin-bottom: 10px;
           }
           .export-button svg {
             margin-right: 5px;
@@ -353,9 +366,10 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
           }
           .export-button:hover {
             background-color: var(--button-hover);
+            transform: scale(1.05);
           }
           .export-button:active {
-            transform: translateY(1px);
+            transform: translateY(1px) scale(1);
             box-shadow: 0 0 1px var(--shadow-color);
           }
           .export-menu {
@@ -368,12 +382,12 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
             padding: 5px 0;
             z-index: 100;
             box-shadow: 0 2px 10px var(--shadow-color);
-            min-width: 120px;
+            min-width: 150px;
           }
           .export-menu-item {
-            padding: 6px 15px;
+            padding: 8px 16px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             white-space: nowrap;
             display: flex;
             align-items: center;
@@ -401,6 +415,12 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
             transition: opacity 0.3s;
             box-shadow: 0 2px 10px var(--shadow-color);
           }
+          .action-buttons {
+            position: relative;
+            display: flex;
+            justify-content: flex-start;
+            margin: 10px 0 15px;
+          }
           [data-theme='light'] {
             --panel-background: #ffffff;
             --background-color: #fafafa;
@@ -416,6 +436,8 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
             --status-text: #5e7985;
             --error-background: #feeef0;
             --error-text: #c56c6c;
+            --info-background: #f0f0f2;
+            --info-text: #5e7985;
           }
           
           [data-theme='dark'] {
@@ -433,24 +455,31 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
             --status-text: #ffffff;
             --error-background: #5a1d1d;
             --error-text: #f48771;
+            --info-background: #2d3439;
+            --info-text: #a6bbc5;
           }
         `}
       </style>
       
       {error && (
         <div className="error-message">
-          <p>YAMLパースエラー:</p>
+          <p>YAML parsing error:</p>
           <pre>{error}</pre>
         </div>
       )}
       
       {communicationStatus && (
-        <div className={`communication-status ${communicationStatus.includes('エラー') ? 'error' : 'success'}`}>
+        <div className={`communication-status ${communicationStatus.includes('Error') ? 'error' : 'success'}`}>
           {communicationStatus}
         </div>
       )}
 
-      {/* YAMLフォーマット情報表示 */}
+      {/* Editing guide */}
+      <div className="editing-guide">
+        <span className="info-icon">ℹ️</span> Double-click on any key or value to edit
+      </div>
+
+      {/* YAML format information display */}
       {!error && jsonData && (
         <div className="yaml-format-info">
           <span className="yaml-format-icon">📄</span>
@@ -460,38 +489,38 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
         </div>
       )}
       
-      {/* エクスポートボタンとメニュー */}
+      {/* Export button and menu */}
       <div className="action-buttons">
         <button 
           className="export-button" 
           onClick={toggleExportMenu}
-          title="エクスポート"
+          title="Export"
         >
-          エクスポート ▾
+          Export ▾
         </button>
         
         {showExportMenu && (
           <div className="export-menu">
-            <div className="export-option" onClick={() => exportAs('json')}>
-              JSONとして保存
+            <div className="export-menu-item" onClick={() => exportAs('json')}>
+              Save as JSON
             </div>
-            <div className="export-option" onClick={() => exportAs('markdown')}>
-              Markdownとして保存
+            <div className="export-menu-item" onClick={() => exportAs('markdown')}>
+              Save as Markdown
             </div>
-            <div className="export-option" onClick={() => exportAs('xml')}>
-              XMLとして保存
+            <div className="export-menu-item" onClick={() => exportAs('xml')}>
+              Save as XML
             </div>
-            <div className="export-option" onClick={() => exportAs('html')}>
-              HTMLとして保存
+            <div className="export-menu-item" onClick={() => exportAs('html')}>
+              Save as HTML
             </div>
-            <div className="export-option" onClick={() => exportAs('png')}>
-              PNGとして保存
+            <div className="export-menu-item" onClick={() => exportAs('png')}>
+              Save as PNG
             </div>
           </div>
         )}
       </div>
       
-      {/* JSON表示またはテーブル表示 */}
+      {/* JSON display or table display */}
       {!error && jsonData && (
         <div className="content-view">
           <TableView data={jsonData} vscodeApi={vscodeApi} yamlContent={yamlContent} />
@@ -501,7 +530,7 @@ const YamlPreviewInner: React.FC<YamlPreviewProps> = ({ initialContent, vscodeAp
   );
 };
 
-// メインコンポーネント（ThemeProviderでラップ）
+// Main component (wrapped with ThemeProvider)
 export const YamlPreview: React.FC<YamlPreviewProps> = (props) => {
   return <YamlPreviewInner {...props} />;
 }; 

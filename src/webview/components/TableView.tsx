@@ -604,7 +604,6 @@ export const TableView: React.FC<TableViewProps> = ({ data, vscodeApi, yamlConte
         onEditValue={updateYamlValue} 
         onEditKey={updateYamlKey}
       />
-      <div className="editable-hint">キーと値はダブルクリックで編集できます</div>
       
       {/* 保存中インジケータ */}
       {isSaving && (

@@ -1,8 +1,8 @@
 /**
- * YAML形式の自動検出ユーティリティ
+ * YAML format auto-detection utility
  */
 
-// サポートされるYAML形式の種類
+// Supported YAML format types
 export enum YamlFormat {
   Generic = 'generic',
   Kubernetes = 'kubernetes',
@@ -13,74 +13,74 @@ export enum YamlFormat {
 }
 
 /**
- * YAMLコンテンツの形式を検出するクラス
+ * Class for detecting YAML content format
  */
 export class YamlDetector {
   /**
-   * YAMLコンテンツから形式を検出
-   * @param content YAMLコンテンツ
-   * @returns 検出された形式
+   * Detect format from YAML content
+   * @param content YAML content
+   * @returns Detected format
    */
   static detectFormat(content: any): YamlFormat {
     if (!content || typeof content !== 'object') {
       return YamlFormat.Generic;
     }
 
-    // Kubernetes リソースの検出
+    // Kubernetes resource detection
     if (content.apiVersion && content.kind) {
       return YamlFormat.Kubernetes;
     }
 
-    // Docker Compose の検出
+    // Docker Compose detection
     if (content.version && (content.services || content.networks || content.volumes)) {
       return YamlFormat.DockerCompose;
     }
 
-    // OpenAPI/Swagger の検出
+    // OpenAPI/Swagger detection
     if (content.openapi || content.swagger) {
       return YamlFormat.OpenAPI;
     }
 
-    // AWS CloudFormation の検出
+    // AWS CloudFormation detection
     if (content.AWSTemplateFormatVersion || content.Resources) {
       return YamlFormat.CloudFormation;
     }
 
-    // GitHub Actions の検出
+    // GitHub Actions detection
     if (content.name && content.on && content.jobs) {
       return YamlFormat.GitHubActions;
     }
 
-    // どのパターンにも一致しない場合はジェネリック
+    // If no patterns match, return generic
     return YamlFormat.Generic;
   }
 
   /**
-   * 形式にあったアイコンを返す
-   * @param format YAML形式
-   * @returns アイコン文字列
+   * Return icon corresponding to the format
+   * @param format YAML format
+   * @returns Icon string
    */
   static getFormatIcon(format: YamlFormat): string {
     switch (format) {
       case YamlFormat.Kubernetes:
-        return ''; // Kubernetesアイコン
+        return ''; // Kubernetes icon
       case YamlFormat.DockerCompose:
-        return ''; // Dockerアイコン
+        return ''; // Docker icon
       case YamlFormat.OpenAPI:
-        return ''; // APIアイコン
+        return ''; // API icon
       case YamlFormat.CloudFormation:
-        return ''; // Cloudアイコン
+        return ''; // Cloud icon
       case YamlFormat.GitHubActions:
-        return ''; // Gear/Actionsアイコン
+        return ''; // Gear/Actions icon
       default:
-        return ''; // Generic documentアイコン
+        return ''; // Generic document icon
     }
   }
 
   /**
-   * 形式の表示名を返す
-   * @param format YAML形式
-   * @returns 表示名
+   * Return display name for the format
+   * @param format YAML format
+   * @returns Display name
    */
   static getFormatDisplayName(format: YamlFormat): string {
     switch (format) {

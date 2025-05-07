@@ -21,10 +21,17 @@
         "title": "Show YAML Preview"
       }
     ],
+    "languages": [
+      {
+        "id": "yaml",
+        "extensions": [".yaml", ".yml"],
+        "aliases": ["YAML", "yaml"]
+      }
+    ],
     "menus": {
       "editor/context": [
         {
-          "when": "editorLangId == yaml",
+          "when": "editorLangId == yaml || resourceExtname == '.yml'",
           "command": "yaml-preview-ui.showPreview",
           "group": "navigation"
         }
