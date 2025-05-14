@@ -3,11 +3,25 @@
   "displayName": "YAML Preview UI",
   "description": "VSCode extension for YAML visualization and editing",
   "version": "0.0.1",
+  "publisher": "fla9ua",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fla9ua/vscode-yaml-preview-ui"
+  },
+  "keywords": [
+    "yaml",
+    "preview",
+    "visualization",
+    "editor"
+  ],
   "engines": {
     "vscode": "^1.60.0"
   },
   "categories": [
-    "Other"
+    "Visualization",
+    "Formatters",
+    "Programming Languages"
   ],
   "activationEvents": [
     "onLanguage:yaml",
