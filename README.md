@@ -1,4 +1,9 @@
 # YAML Preview UI
+[![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/fla9ua.yaml-preview-ui?logo=visualstudiocode&label=YAML%20Preview%20UI)](https://marketplace.visualstudio.com/items?itemName=fla9ua.yaml-preview-ui)
+[![VS Code Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/fla9ua.yaml-preview-ui)](https://marketplace.visualstudio.com/items?itemName=fla9ua.yaml-preview-ui)
+[![VS Code Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/fla9ua.yaml-preview-ui)](https://marketplace.visualstudio.com/items?itemName=fla9ua.yaml-preview-ui)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-black?style=flat-square&logo=github)](https://github.com/fla9ua/vscode-yaml-preview-ui)
+[![GitHub Stars](https://img.shields.io/github/stars/fla9ua/vscode-yaml-preview-ui?style=social)](https://github.com/fla9ua/vscode-yaml-preview-ui)  
 
 A Visual Studio Code extension that provides visualization and editing capabilities for YAML files.
 
