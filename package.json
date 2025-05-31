@@ -2,7 +2,7 @@
   "name": "yaml-preview-ui",
   "displayName": "YAML Preview UI",
   "description": "VSCode extension for YAML visualization and editing",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "fla9ua",
   "license": "MIT",
   "icon": "resources/icon.png",
