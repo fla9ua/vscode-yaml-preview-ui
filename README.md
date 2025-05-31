@@ -14,7 +14,7 @@ A Visual Studio Code extension that provides visualization and editing capabilit
 - Preview display from context menu
 - Export to various formats (JSON, Markdown, HTML, XML, PNG)
 
-![sample](https://github.com/fla9ua/vscode-yaml-preview-ui/blob/cf3fdd8c4f6212448ef76c48b545c49a7db3bd30/sample.png)
+![sample](https://github.com/user-attachments/assets/f67fdddf-07a8-42f6-9afa-4a511050703a)
 
 ## Usage
 
